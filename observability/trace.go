@@ -4,12 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/BogdanBeliy/lgtm-obs/internal/otlp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+
+	"github.com/BogdanBeliy/lgtm-obs/internal/otlp"
 )
 
+// Traces owns the OpenTelemetry tracer provider and its configuration.
 type Traces struct {
 	Config   *Configs
 	Resource *resource.Resource
@@ -18,6 +20,7 @@ type Traces struct {
 	exporter sdktrace.SpanExporter
 }
 
+// NewTracing creates and installs an OTLP tracer provider.
 func (o *Observability) NewTracing(ctx context.Context) (*Traces, error) {
 	exporter, err := otlp.NewTraceExporter(ctx, otlp.Endpoint{
 		Protocol: o.Cfgs.Protocol,
@@ -44,6 +47,7 @@ func (o *Observability) NewTracing(ctx context.Context) (*Traces, error) {
 	}, nil
 }
 
+// Shutdown flushes pending spans and stops the tracer provider.
 func (t *Traces) Shutdown(ctx context.Context) error {
 	if t == nil || t.Provider == nil {
 		return nil

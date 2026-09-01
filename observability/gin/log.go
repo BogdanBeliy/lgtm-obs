@@ -3,12 +3,13 @@ package gin
 import (
 	"time"
 
-	"github.com/BogdanBeliy/lgtm-obs/observability"
 	"github.com/gin-gonic/gin"
+
+	"github.com/BogdanBeliy/lgtm-obs/observability"
 )
 
 // RequestAttrs returns slog key-value pairs for an HTTP request (OpenTelemetry semconv names).
-func RequestAttrs(c *gin.Context, started time.Time, handlerErr error) []any {
+func RequestAttrs(c *gin.Context, started time.Time, accessErr error) []any {
 	status := c.Writer.Status()
 	attrs := []any{
 		"http.method", c.Request.Method,
@@ -25,8 +26,8 @@ func RequestAttrs(c *gin.Context, started time.Time, handlerErr error) []any {
 		"url.query", c.Request.URL.RawQuery,
 		"duration_ms", time.Since(started).Milliseconds(),
 	}
-	if handlerErr != nil {
-		attrs = append(attrs, "error.message", handlerErr.Error())
+	if accessErr != nil {
+		attrs = append(attrs, "error.message", accessErr.Error())
 	}
 	return attrs
 }
@@ -46,15 +47,17 @@ func ErrorRequest(c *gin.Context, started time.Time, msg string, err error, args
 	observability.Error(c.Request.Context(), msg, args...)
 }
 
-func logAccess(c *gin.Context, started time.Time, handlerErr error) {
+func logAccess(c *gin.Context, started time.Time, handlerErr error, responseBody []byte) {
 	status := c.Writer.Status()
-	attrs := RequestAttrs(c, started, handlerErr)
+	accessErr := observability.AccessLogError(handlerErr, status, responseBody)
+	attrs := RequestAttrs(c, started, accessErr)
 	msg := observability.AccessLogMessage(
 		c.Request.Method,
 		c.FullPath(),
 		c.Request.URL.Path,
 		status,
 		time.Since(started).Milliseconds(),
+		accessErr,
 	)
-	observability.LogAccess(c.Request.Context(), status, msg, handlerErr, attrs...)
+	observability.LogAccess(c.Request.Context(), status, msg, accessErr, attrs...)
 }

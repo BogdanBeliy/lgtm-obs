@@ -4,17 +4,20 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/BogdanBeliy/lgtm-obs/internal/paths"
-	"github.com/BogdanBeliy/lgtm-obs/observability"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+
+	"github.com/BogdanBeliy/lgtm-obs/internal/paths"
+	"github.com/BogdanBeliy/lgtm-obs/observability"
 )
 
+// Config defines Gin middleware settings.
 type Config struct {
 	ServiceName  string
 	ExcludePaths []string
 }
 
+// ConfigFrom creates Gin middleware settings from observability configuration.
 func ConfigFrom(cfg *observability.Configs) Config {
 	if cfg == nil {
 		return Config{}
@@ -25,6 +28,7 @@ func ConfigFrom(cfg *observability.Configs) Config {
 	}
 }
 
+// Middleware returns Gin middleware for tracing and access logging.
 func Middleware(cfg Config) gin.HandlerFunc {
 	if cfg.ServiceName == "" {
 		return func(c *gin.Context) { c.Next() }
@@ -44,13 +48,15 @@ func Middleware(cfg Config) gin.HandlerFunc {
 		}
 
 		started := time.Now()
+		bodyWriter := &responseBodyWriter{ResponseWriter: c.Writer}
+		c.Writer = bodyWriter
 		otelMW(c)
 
 		var handlerErr error
 		if last := c.Errors.Last(); last != nil {
 			handlerErr = last.Err
 		}
-		logAccess(c, started, handlerErr)
+		logAccess(c, started, handlerErr, bodyWriter.body.Bytes())
 	}
 }
 

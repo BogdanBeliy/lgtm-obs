@@ -3,7 +3,6 @@ package observability
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -12,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// NewLogger installs a slog logger that writes to stdout and OpenTelemetry.
 func (o *Observability) NewLogger(logs *Logs) {
 	otelHandler := otelslog.NewHandler("otel-slog", otelslog.WithLoggerProvider(logs.Provider))
 
@@ -31,16 +31,19 @@ func newStdoutHandler(format string) slog.Handler {
 	}
 }
 
+// Info writes an informational log record and adds trace correlation fields.
 func Info(ctx context.Context, msg string, args ...any) {
 	_, a := embedArgs(ctx, args...)
 	slog.InfoContext(ctx, msg, a...)
 }
 
+// Warn writes a warning log record and adds trace correlation fields.
 func Warn(ctx context.Context, msg string, args ...any) {
 	_, a := embedArgs(ctx, args...)
 	slog.WarnContext(ctx, msg, a...)
 }
 
+// Error writes an error log record and marks the active span as failed.
 func Error(ctx context.Context, msg string, args ...any) {
 	span, a := embedArgs(ctx, args...)
 	if span != nil {
@@ -64,8 +67,8 @@ func AccessLogLevel(status int) slog.Level {
 }
 
 // LogAccess writes an access log with a unified message and level derived from status.
-// handlerErr is recorded on the span for 5xx responses when present.
-func LogAccess(ctx context.Context, status int, msg string, handlerErr error, args ...any) {
+// accessErr is recorded on the span for 5xx responses when present.
+func LogAccess(ctx context.Context, status int, msg string, accessErr error, args ...any) {
 	_, a := embedArgs(ctx, args...)
 
 	switch AccessLogLevel(status) {
@@ -75,9 +78,9 @@ func LogAccess(ctx context.Context, status int, msg string, handlerErr error, ar
 		slog.WarnContext(ctx, msg, a...)
 	default:
 		if span := trace.SpanFromContext(ctx); span != nil {
-			if handlerErr != nil {
-				span.RecordError(handlerErr)
-				span.SetStatus(codes.Error, handlerErr.Error())
+			if accessErr != nil {
+				span.RecordError(accessErr)
+				span.SetStatus(codes.Error, accessErr.Error())
 			} else {
 				span.SetStatus(codes.Error, msg)
 			}
@@ -94,12 +97,4 @@ func embedArgs(ctx context.Context, args ...any) (trace.Span, []any) {
 		return span, args
 	}
 	return nil, args
-}
-
-func AccessLogMessage(method, route, path string, status int, durationMs int64) string {
-	target := route
-	if target == "" {
-		target = path
-	}
-	return fmt.Sprintf("%s %s %d %dms", method, target, status, durationMs)
 }

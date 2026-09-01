@@ -1,5 +1,7 @@
 # lgtm-obs
 
+[![Latest tag](https://img.shields.io/github/v/tag/BogdanBeliy/lgtm-obs?sort=semver)](https://github.com/BogdanBeliy/lgtm-obs/tags)
+
 OpenTelemetry observability library for Go: traces, metrics, logs → OTLP → LGTM stack.
 
 ## Install
@@ -37,3 +39,19 @@ go run ./examples/fiber
 ```
 
 Requires a running OTLP collector (e.g. local LGTM on `:4318` HTTP / `:4317` gRPC).
+
+## Quality checks
+
+```bash
+make tools     # install pinned golangci-lint and govulncheck versions
+make fmt       # format Go code
+make check     # formatting, linters, security, vulnerabilities, race tests
+```
+
+Pull requests to `main` must use a release prefix:
+
+- `patch/*` increments `vX.Y.Z`
+- `minor/*` increments `vX.Y.0`
+- `major/*` increments `vX.0.0`
+
+The next version is shown in the PR checks. The tag is created after merge.

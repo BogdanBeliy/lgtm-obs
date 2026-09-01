@@ -6,9 +6,10 @@ import (
 	"context"
 	"log"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/BogdanBeliy/lgtm-obs/observability"
 	obgin "github.com/BogdanBeliy/lgtm-obs/observability/gin"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {

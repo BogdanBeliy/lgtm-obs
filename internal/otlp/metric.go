@@ -9,6 +9,7 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 )
 
+// NewMetricExporter creates an OTLP metric exporter for the configured protocol.
 func NewMetricExporter(ctx context.Context, cfg Endpoint) (sdkmetric.Exporter, error) {
 	switch cfg.Protocol {
 	case "http":

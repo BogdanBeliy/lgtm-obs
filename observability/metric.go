@@ -4,12 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/BogdanBeliy/lgtm-obs/internal/otlp"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/sdk/resource"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+
+	"github.com/BogdanBeliy/lgtm-obs/internal/otlp"
 )
 
+// Metrics owns the OpenTelemetry meter provider and its configuration.
 type Metrics struct {
 	Config   *Configs
 	Resource *resource.Resource
@@ -18,6 +20,7 @@ type Metrics struct {
 	exporter sdkmetric.Exporter
 }
 
+// NewMetrics creates and installs an OTLP meter provider.
 func (o *Observability) NewMetrics(ctx context.Context) (*Metrics, error) {
 	exporter, err := otlp.NewMetricExporter(ctx, otlp.Endpoint{
 		Protocol: o.Cfgs.Protocol,
@@ -44,6 +47,7 @@ func (o *Observability) NewMetrics(ctx context.Context) (*Metrics, error) {
 	}, nil
 }
 
+// Shutdown flushes pending metrics and stops the meter provider.
 func (m *Metrics) Shutdown(ctx context.Context) error {
 	if m == nil || m.Provider == nil {
 		return nil

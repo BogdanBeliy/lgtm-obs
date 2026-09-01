@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 )
 
+// Observability groups configured trace, metric, and log providers.
 type Observability struct {
 	Cfgs     *Configs
 	Traces   *Traces
@@ -15,6 +16,7 @@ type Observability struct {
 	resource *resource.Resource
 }
 
+// InitObservability initializes OTLP exporters and installs global providers.
 func InitObservability(ctx context.Context, configs *Configs) (*Observability, error) {
 	obs := &Observability{}
 
@@ -50,6 +52,7 @@ func InitObservability(ctx context.Context, configs *Configs) (*Observability, e
 	return obs, nil
 }
 
+// Shutdown stops all initialized telemetry providers.
 func (o *Observability) Shutdown(ctx context.Context) {
 	if o.Traces != nil {
 		if err := o.Traces.Shutdown(ctx); err != nil {
