@@ -3,12 +3,14 @@ package observability
 import (
 	"context"
 
-	"github.com/BogdanBeliy/lgtm-obs/internal/otlp"
 	g "go.opentelemetry.io/otel/log/global"
-	"go.opentelemetry.io/otel/sdk/resource"
 	sdklogs "go.opentelemetry.io/otel/sdk/log"
+	"go.opentelemetry.io/otel/sdk/resource"
+
+	"github.com/BogdanBeliy/lgtm-obs/internal/otlp"
 )
 
+// Logs owns the OpenTelemetry logger provider and its configuration.
 type Logs struct {
 	Config   *Configs
 	Resource *resource.Resource
@@ -17,6 +19,7 @@ type Logs struct {
 	exporter sdklogs.Exporter
 }
 
+// NewLogs creates and installs an OTLP logger provider.
 func (o *Observability) NewLogs(ctx context.Context) (*Logs, error) {
 	exporter, err := otlp.NewLogExporter(ctx, otlp.Endpoint{
 		Protocol: o.Cfgs.Protocol,
@@ -43,6 +46,7 @@ func (o *Observability) NewLogs(ctx context.Context) (*Logs, error) {
 	}, nil
 }
 
+// Shutdown flushes pending log records and stops the logger provider.
 func (l *Logs) Shutdown(ctx context.Context) error {
 	if l == nil || l.Provider == nil {
 		return nil

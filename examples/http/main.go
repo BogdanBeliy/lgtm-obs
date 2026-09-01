@@ -7,9 +7,11 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
+
+	"go.opentelemetry.io/otel"
 
 	"github.com/BogdanBeliy/lgtm-obs/observability"
-	"go.opentelemetry.io/otel"
 )
 
 func main() {
@@ -37,5 +39,13 @@ func main() {
 	})
 
 	log.Println("http example on :8081")
-	log.Fatal(http.ListenAndServe(":8081", obs.WrapHandlers(mux, "example-http")))
+	server := &http.Server{
+		Addr:              ":8081",
+		Handler:           obs.WrapHandlers(mux, "example-http"),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	log.Fatal(server.ListenAndServe())
 }

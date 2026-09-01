@@ -5,6 +5,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
+// NewResource builds resource attributes shared by all telemetry signals.
 func (o *Observability) NewResource() *resource.Resource {
 	res := resource.NewSchemaless(
 		semconv.ServiceName(o.Cfgs.ServiceName),

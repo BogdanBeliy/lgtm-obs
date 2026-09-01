@@ -1,0 +1,115 @@
+name: Quality
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint, security and tests
+    if: github.event_name == 'push' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run linters and security checks
+        uses: golangci/golangci-lint-action@v9.3.0
+        with:
+          version: v2.13.0
+          args: --timeout=5m
+
+      - name: Check formatting
+        run: make fmt-check
+
+      - name: Run tests with race detector
+        run: make test
+
+      - name: Scan dependencies for vulnerabilities
+        run: make vuln
+
+  version-preview:
+    name: Preview release tag
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Calculate next version
+        id: version
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          version="$(bash .github/scripts/next-version.sh "$BRANCH_NAME")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "### Release tag: \`$version\`" >> "$GITHUB_STEP_SUMMARY"
+
+  release-tag:
+    name: Create release tag
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    concurrency:
+      group: release-tags-main
+      cancel-in-progress: false
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Calculate next version
+        id: version
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+        run: |
+          version="$(bash .github/scripts/next-version.sh "$BRANCH_NAME")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git show-ref --tags --verify --quiet "refs/tags/$VERSION"; then
+            echo "Tag $VERSION already exists" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+          echo "### Created release tag: \`$VERSION\`" >> "$GITHUB_STEP_SUMMARY"

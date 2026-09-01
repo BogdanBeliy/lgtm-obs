@@ -4,12 +4,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/BogdanBeliy/lgtm-obs/observability"
 	"github.com/gofiber/fiber/v3"
+
+	"github.com/BogdanBeliy/lgtm-obs/observability"
 )
 
 // RequestAttrs returns slog key-value pairs for an HTTP request (OpenTelemetry semconv names).
-func RequestAttrs(c fiber.Ctx, started time.Time, handlerErr error) []any {
+func RequestAttrs(c fiber.Ctx, started time.Time, accessErr error) []any {
 	status := c.Response().StatusCode()
 	attrs := []any{
 		"http.method", c.Method(),
@@ -26,8 +27,8 @@ func RequestAttrs(c fiber.Ctx, started time.Time, handlerErr error) []any {
 		"url.query", string(c.Request().URI().QueryString()),
 		"duration_ms", time.Since(started).Milliseconds(),
 	}
-	if handlerErr != nil {
-		attrs = append(attrs, "error.message", handlerErr.Error())
+	if accessErr != nil {
+		attrs = append(attrs, "error.message", accessErr.Error())
 	}
 	return attrs
 }
@@ -49,25 +50,17 @@ func ErrorRequest(c fiber.Ctx, started time.Time, msg string, err error, args ..
 
 func logAccess(c fiber.Ctx, started time.Time, handlerErr error) {
 	status := c.Response().StatusCode()
-	attrs := RequestAttrs(c, started, handlerErr)
+	accessErr := observability.AccessLogError(handlerErr, status, c.Response().Body())
+	attrs := RequestAttrs(c, started, accessErr)
 	msg := observability.AccessLogMessage(
 		c.Method(),
 		c.FullPath(),
 		c.Path(),
 		status,
 		time.Since(started).Milliseconds(),
+		accessErr,
 	)
-
-	switch {
-	case handlerErr != nil:
-		observability.Error(c.Context(), handlerErr.Error(), attrs...)
-	case status >= 500:
-		observability.Error(c.Context(), msg, attrs...)
-	case status >= 400:
-		observability.Warn(c.Context(), msg, attrs...)
-	default:
-		observability.Info(c.Context(), msg, attrs...)
-	}
+	observability.LogAccess(c.Context(), status, msg, accessErr, attrs...)
 }
 
 func requestContentLength(c fiber.Ctx) int64 {

@@ -9,6 +9,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
+// NewTraceExporter creates an OTLP trace exporter for the configured protocol.
 func NewTraceExporter(ctx context.Context, cfg Endpoint) (sdktrace.SpanExporter, error) {
 	switch cfg.Protocol {
 	case "http":

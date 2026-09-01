@@ -5,6 +5,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 )
 
+// NewPropagator installs W3C Trace Context and Baggage propagation.
 func (o *Observability) NewPropagator() {
 	tc := propagation.TraceContext{}
 	bg := propagation.Baggage{}

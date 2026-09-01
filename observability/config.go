@@ -1,5 +1,6 @@
 package observability
 
+// Configs defines OTLP connection, service identity, logging, and middleware settings.
 type Configs struct {
 	Path         string
 	Protocol     string
@@ -11,6 +12,7 @@ type Configs struct {
 	ExcludePaths []string
 }
 
+// NewConfigs copies cfg and applies defaults to empty fields.
 func NewConfigs(cfg *Configs) *Configs {
 	c := Configs{}
 	if cfg != nil {

@@ -6,9 +6,10 @@ import (
 	"context"
 	"log"
 
+	"github.com/gofiber/fiber/v3"
+
 	"github.com/BogdanBeliy/lgtm-obs/observability"
 	obfiber "github.com/BogdanBeliy/lgtm-obs/observability/fiber"
-	"github.com/gofiber/fiber/v3"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 	app.Use(obfiber.Middleware(obfiber.ConfigFrom(obs.Cfgs)))
 
 	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello World")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "500 Internal Server Error"})
 	})
 	app.Get("/health", func(c fiber.Ctx) error {
 		return c.SendString("ok")

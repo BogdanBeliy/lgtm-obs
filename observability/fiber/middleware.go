@@ -5,20 +5,23 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/BogdanBeliy/lgtm-obs/internal/paths"
-	"github.com/BogdanBeliy/lgtm-obs/observability"
 	"github.com/gofiber/fiber/v3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
+
+	"github.com/BogdanBeliy/lgtm-obs/internal/paths"
+	"github.com/BogdanBeliy/lgtm-obs/observability"
 )
 
+// Config defines Fiber middleware settings.
 type Config struct {
 	ServiceName  string
 	ExcludePaths []string
 }
 
+// ConfigFrom creates Fiber middleware settings from observability configuration.
 func ConfigFrom(cfg *observability.Configs) Config {
 	if cfg == nil {
 		return Config{}
@@ -29,6 +32,7 @@ func ConfigFrom(cfg *observability.Configs) Config {
 	}
 }
 
+// Middleware returns Fiber middleware for tracing and access logging.
 func Middleware(cfg Config) fiber.Handler {
 	if cfg.ServiceName == "" {
 		return func(c fiber.Ctx) error { return c.Next() }
