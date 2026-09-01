@@ -3,6 +3,7 @@ package observability
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -57,4 +58,12 @@ func embedArgs(ctx context.Context, args ...any) (trace.Span, []any) {
 		return span, args
 	}
 	return nil, args
+}
+
+func AccessLogMessage(method, route, path string, status int, durationMs int64) string {
+	target := route
+	if target == "" {
+		target = path
+	}
+	return fmt.Sprintf("%s %s %d %dms", method, target, status, durationMs)
 }

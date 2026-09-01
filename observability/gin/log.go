@@ -49,7 +49,13 @@ func ErrorRequest(c *gin.Context, started time.Time, msg string, err error, args
 func logAccess(c *gin.Context, started time.Time, handlerErr error) {
 	status := c.Writer.Status()
 	attrs := RequestAttrs(c, started, handlerErr)
-	msg := "HTTP request"
+	msg := observability.AccessLogMessage(
+		c.Request.Method,
+		c.FullPath(),
+		c.Request.URL.Path,
+		status,
+		time.Since(started).Milliseconds(),
+	)
 
 	switch {
 	case handlerErr != nil:

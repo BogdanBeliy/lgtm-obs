@@ -50,7 +50,13 @@ func ErrorRequest(c fiber.Ctx, started time.Time, msg string, err error, args ..
 func logAccess(c fiber.Ctx, started time.Time, handlerErr error) {
 	status := c.Response().StatusCode()
 	attrs := RequestAttrs(c, started, handlerErr)
-	msg := "HTTP request"
+	msg := observability.AccessLogMessage(
+		c.Method(),
+		c.FullPath(),
+		c.Path(),
+		status,
+		time.Since(started).Milliseconds(),
+	)
 
 	switch {
 	case handlerErr != nil:

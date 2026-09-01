@@ -19,6 +19,7 @@ func main() {
 		Path:         "localhost:4318",
 		Insecure:     true,
 		ExcludePaths: []string{"/health"},
+		ServiceName:  "library-test",
 	})
 	if err != nil {
 		log.Fatal(err)
