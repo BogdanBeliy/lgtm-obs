@@ -16,9 +16,11 @@ func main() {
 	ctx := context.Background()
 
 	obs, err := observability.InitObservability(ctx, &observability.Configs{
-		Protocol: "http",
-		Path:     "localhost:4318",
-		Insecure: true,
+		Protocol:     "http",
+		Path:         "localhost:4318",
+		Insecure:     true,
+		ExcludePaths: []string{"/health"},
+		ServiceName:  "library-test",
 	})
 	if err != nil {
 		log.Fatal(err)
