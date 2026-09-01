@@ -56,15 +56,5 @@ func logAccess(c *gin.Context, started time.Time, handlerErr error) {
 		status,
 		time.Since(started).Milliseconds(),
 	)
-
-	switch {
-	case handlerErr != nil:
-		observability.Error(c.Request.Context(), handlerErr.Error(), attrs...)
-	case status >= 500:
-		observability.Error(c.Request.Context(), msg, attrs...)
-	case status >= 400:
-		observability.Warn(c.Request.Context(), msg, attrs...)
-	default:
-		observability.Info(c.Request.Context(), msg, attrs...)
-	}
+	observability.LogAccess(c.Request.Context(), status, msg, handlerErr, attrs...)
 }

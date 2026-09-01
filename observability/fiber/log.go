@@ -57,17 +57,7 @@ func logAccess(c fiber.Ctx, started time.Time, handlerErr error) {
 		status,
 		time.Since(started).Milliseconds(),
 	)
-
-	switch {
-	case handlerErr != nil:
-		observability.Error(c.Context(), handlerErr.Error(), attrs...)
-	case status >= 500:
-		observability.Error(c.Context(), msg, attrs...)
-	case status >= 400:
-		observability.Warn(c.Context(), msg, attrs...)
-	default:
-		observability.Info(c.Context(), msg, attrs...)
-	}
+	observability.LogAccess(c.Context(), status, msg, handlerErr, attrs...)
 }
 
 func requestContentLength(c fiber.Ctx) int64 {
