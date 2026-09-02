@@ -7,7 +7,7 @@ OpenTelemetry observability library for Go: traces, metrics, logs → OTLP → L
 ## Install
 
 ```bash
-go get github.com/BogdanBeliy/lgtm-obs@v0.1.0
+go get github.com/BogdanBeliy/lgtm-obs@latest
 ```
 
 ## Usage
@@ -33,6 +33,53 @@ defer obs.Shutdown(ctx)
 - `0`, negative values, and values greater than `1` use the default `1.0`.
 
 Sampling is parent-based: child spans follow the sampling decision of their parent trace.
+
+### Outgoing HTTP tracing
+
+Use `RoundTripper` to create client spans and propagate the current trace context to downstream services:
+
+```go
+client := &http.Client{
+    Transport: obs.RoundTripper(nil),
+    Timeout:   5 * time.Second,
+}
+```
+
+Create the client once and reuse it. Passing `nil` uses `http.DefaultTransport`; an existing custom transport can be passed instead.
+
+The outgoing request must use the context provided by the server middleware.
+
+Gin:
+
+```go
+router.Use(obgin.Middleware(obgin.ConfigFrom(obs.Cfgs)))
+
+req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, upstreamURL, nil)
+resp, err := client.Do(req)
+```
+
+Fiber:
+
+```go
+app.Use(obfiber.Middleware(obfiber.ConfigFrom(obs.Cfgs)))
+
+req, err := http.NewRequestWithContext(c.Context(), http.MethodGet, upstreamURL, nil)
+resp, err := client.Do(req)
+```
+
+Reverse proxy:
+
+```go
+proxy := &httputil.ReverseProxy{
+    Transport: obs.RoundTripper(nil),
+}
+```
+
+This produces a connected trace:
+
+```text
+incoming SERVER span → outgoing CLIENT span → downstream SERVER span
+```
 
 ## Packages
 
