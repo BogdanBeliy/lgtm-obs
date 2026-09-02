@@ -10,3 +10,9 @@ import (
 func (o *Observability) WrapHandlers(handler http.Handler, operation string) http.Handler {
 	return otelhttp.NewHandler(handler, operation)
 }
+
+// RoundTripper instruments outgoing HTTP requests with OpenTelemetry.
+// A nil base transport uses http.DefaultTransport.
+func (o *Observability) RoundTripper(base http.RoundTripper) http.RoundTripper {
+	return otelhttp.NewTransport(base)
+}
