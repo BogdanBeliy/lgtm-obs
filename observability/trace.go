@@ -32,6 +32,7 @@ func (o *Observability) NewTracing(ctx context.Context) (*Traces, error) {
 	}
 
 	provider := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(o.Cfgs.SampleRate))),
 		sdktrace.WithBatcher(exporter,
 			sdktrace.WithBatchTimeout(5*time.Second),
 			sdktrace.WithMaxExportBatchSize(100)),
