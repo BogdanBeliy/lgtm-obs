@@ -6,6 +6,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -56,7 +57,11 @@ func main() {
 			http.Error(w, "upstream request failed", http.StatusBadGateway)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				slog.Error("Failed to close response body", "error", err)
+			}
+		}()
 		_, _ = io.Copy(io.Discard, resp.Body)
 
 		observability.Info(r.Context(), "upstream request completed", "status_code", resp.StatusCode)
