@@ -18,9 +18,21 @@ obs, err := observability.InitObservability(ctx, &observability.Configs{
     Protocol:    "http", // or grpc
     Path:        "localhost:4318",
     Insecure:    true,
+    SampleRate:  0.1, // export 10% of new traces
 })
 defer obs.Shutdown(ctx)
 ```
+
+### Trace sampling
+
+`SampleRate` controls which share of new traces is recorded and exported:
+
+- `1.0` records all traces;
+- `0.1` records approximately 10%;
+- values in the `(0, 1]` range are accepted;
+- `0`, negative values, and values greater than `1` use the default `1.0`.
+
+Sampling is parent-based: child spans follow the sampling decision of their parent trace.
 
 ## Packages
 

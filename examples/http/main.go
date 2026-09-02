@@ -23,6 +23,7 @@ func main() {
 		Insecure:     true,
 		ExcludePaths: []string{"/health"},
 		ServiceName:  "library-test",
+		SampleRate:   0.1,
 	})
 	if err != nil {
 		log.Fatal(err)

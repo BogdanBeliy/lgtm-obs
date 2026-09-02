@@ -10,6 +10,7 @@ type Configs struct {
 	LogFormat    string
 	Insecure     bool
 	ExcludePaths []string
+	SampleRate   float64
 }
 
 // NewConfigs copies cfg and applies defaults to empty fields.
@@ -24,6 +25,7 @@ func NewConfigs(cfg *Configs) *Configs {
 		c.LogFormat = cfg.LogFormat
 		c.Insecure = cfg.Insecure
 		c.ExcludePaths = append([]string(nil), cfg.ExcludePaths...)
+		c.SampleRate = cfg.SampleRate
 	}
 
 	c.applyDefaults()
@@ -37,6 +39,7 @@ func (c *Configs) applyDefaults() {
 	c.setEnvironment()
 	c.setVersion()
 	c.setLogFormat()
+	c.setSampleRate()
 }
 
 func (c *Configs) setLogFormat() {
@@ -78,5 +81,11 @@ func (c *Configs) setEnvironment() {
 func (c *Configs) setVersion() {
 	if c.Version == "" {
 		c.Version = "0.0.1"
+	}
+}
+
+func (c *Configs) setSampleRate() {
+	if c.SampleRate <= 0 || c.SampleRate > 1 {
+		c.SampleRate = 1.0
 	}
 }
